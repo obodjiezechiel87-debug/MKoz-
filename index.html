@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050B1A">
+<title>MKoz</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050B1A;--panel:#0A1530;--line:#16284F;--blue:#2F6BFF;--sky:#8DB6FF;--text:#EAF0FF;--mut:#8C9BC0;--on:#fff;color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--bg)}
+body{font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);display:flex;justify-content:center}
+#app{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column;border-inline:1px solid var(--line);position:relative;overflow:hidden}
+[hidden]{display:none!important}
+.screen{display:none;flex:1;min-height:0;flex-direction:column}.screen.on{display:flex}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+input{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;width:100%}
+input::placeholder{color:var(--mut)}
+input[type=color]{width:56px;height:40px;padding:3px;cursor:pointer}
+.cta{background:var(--blue);color:var(--on);font-weight:600;border-radius:12px;padding:15px}
+.ghost{border:1px solid var(--line);border-radius:12px;padding:14px;color:var(--sky)}
+.note{font-size:13px;color:var(--mut)}.pad{padding:12px 20px}
+.auth{justify-content:center;padding:28px;gap:12px;overflow:auto}
+.auth svg{width:64px;height:64px}
+.auth h1{font-size:56px;line-height:1;font-weight:800;letter-spacing:-.03em}
+.auth p{color:var(--mut)}
+.top{display:flex;align-items:center;gap:12px;padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+.top h2{font-size:24px;font-weight:800;letter-spacing:-.02em;flex:1}
+.top b{font-size:18px;cursor:pointer}
+.back{font-size:24px;color:var(--sky);padding:0 8px 0 0}
+.av{width:44px;height:44px;border-radius:50%;background:var(--line);display:grid;place-items:center;font-weight:600;color:var(--sky);flex:none}
+.list,.scroll{overflow:auto;flex:1}
+.row{display:flex;gap:14px;align-items:center;padding:14px 20px;width:100%;text-align:left;border-bottom:1px solid var(--line)}
+.row:hover{background:var(--panel)}.mid{flex:1;min-width:0}.mid b{display:block}
+.mid span{color:var(--mut);font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msgs{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:8px}
+.b{max-width:78%;padding:10px 14px;border-radius:18px;line-height:1.35;overflow-wrap:anywhere}
+.b small{display:block;font-size:11px;margin-top:3px;opacity:.7;text-align:right}
+.in{align-self:flex-start;background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:5px}
+.out{align-self:flex-end;background:var(--blue);color:var(--on);border-bottom-right-radius:5px}
+.bar{display:flex;gap:8px;padding:10px 12px 14px;border-top:1px solid var(--line)}
+.bar input{border-radius:99px;flex:1}
+.send{width:46px;height:46px;border-radius:50%;background:var(--blue);color:var(--on);flex:none}
+.shead{display:flex;gap:14px;align-items:center;padding:18px 20px}
+.shead .av{width:64px;height:64px;font-size:22px}.shead b{display:block;font-size:20px}.shead span{font-size:14px;color:var(--mut)}
+.acts,.pub{display:grid;gap:8px;padding:0 20px 14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px 20px 20px}
+.art{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:4px;align-content:start}
+.art span{color:var(--sky);font-size:14px}.art button{color:var(--mut);font-size:13px;text-align:left}
+.opt{padding:16px 20px;border-bottom:1px solid var(--line);display:grid;gap:12px}
+.opt label{display:flex;justify-content:space-between;align-items:center;gap:12px}
+#pre{display:flex;gap:10px;flex-wrap:wrap}
+.sw2{width:44px;height:44px;border-radius:50%;border:2px solid;display:grid;place-items:center}.sw2 i{width:18px;height:18px;border-radius:50%}
+.nav{display:none;border-top:1px solid var(--line)}.nav.on{display:flex}
+.nav button{flex:1;padding:14px 0 16px;color:var(--mut);font-size:14px}
+.nav button.act{color:var(--text);font-weight:600;box-shadow:inset 0 2px 0 var(--blue)}
+#toast{position:absolute;left:50%;bottom:90px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;text-align:center}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div id="app">
+
+<section class="screen auth on" id="auth">
+  <svg viewBox="0 0 200 200" role="img" aria-label="Logo MKoz"><rect width="200" height="200" rx="44" style="fill:var(--panel)"/><path d="M52 56h96a14 14 0 0 1 14 14v58a14 14 0 0 1-14 14H98l-30 24v-24H52a14 14 0 0 1-14-14V70a14 14 0 0 1 14-14z" style="fill:var(--blue)"/><polyline points="66,118 66,80 100,106 134,80 134,118" fill="none" style="stroke:var(--bg)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <h1>MKoz</h1>
+  <p>Discutez, achetez et vendez en toute simplicité.</p>
+  <input id="nm" placeholder="Ton nom ou le nom de ta boutique" autocomplete="name" hidden>
+  <input id="em" type="email" placeholder="Adresse e-mail" autocomplete="email">
+  <input id="pw" type="password" placeholder="Mot de passe (6 caractères minimum)" autocomplete="current-password">
+  <button class="cta" id="go">Se connecter</button>
+  <button class="ghost" id="sw">Créer un compte</button>
+</section>
+
+<section class="screen" id="chats">
+  <div class="top"><h2>Discussions</h2></div>
+  <div class="pub" style="padding-top:12px"><input id="lk" placeholder="Coller un lien de profil"><button class="ghost" id="ol">Ouvrir le profil</button></div>
+  <div class="list" id="cl"></div>
+</section>
+
+<section class="screen" id="chat">
+  <div class="top"><button class="back" id="bk" aria-label="Retour">‹</button><div class="av" id="cav"></div><b id="cn"></b></div>
+  <div class="msgs" id="ms"></div>
+  <div class="bar"><input id="tx" placeholder="Écrire un message" autocomplete="off"><button class="send" id="sd" aria-label="Envoyer">➤</button></div>
+</section>
+
+<section class="screen" id="prof">
+  <div class="top"><h2>Profil</h2></div>
+  <div class="scroll">
+    <div class="shead"><div class="av" id="pav"></div><div><b id="pn"></b><span id="pb"></span></div></div>
+    <div class="acts" id="own" hidden><button class="cta" id="cp">Copier mon lien de profil</button><button class="ghost" id="eb">Modifier la description</button></div>
+    <div class="acts" id="oth" hidden><button class="cta" id="wr">Écrire</button></div>
+    <div class="pub" id="pf" hidden><input id="an" placeholder="Nom de l’article"><input id="ap" placeholder="Prix en FCFA" inputmode="numeric"><button class="ghost" id="ad">Publier l’article</button></div>
+    <div class="grid" id="gr"></div>
+  </div>
+</section>
+
+<section class="screen" id="set">
+  <div class="top"><h2>Réglages</h2></div>
+  <div class="scroll">
+    <div class="opt"><b>Couleurs</b><span class="note">Chacun choisit ses couleurs.</span><div id="pre"></div>
+      <label>Couleur principale<input type="color" id="c1" value="#2F6BFF"></label>
+      <label>Couleur de fond<input type="color" id="c2" value="#050B1A"></label>
+      <button class="ghost" id="rs">Rétablir le bleu nuit</button></div>
+    <div class="opt"><span class="note" id="who"></span><button class="ghost" id="lo">Se déconnecter</button></div>
+  </div>
+</section>
+
+<nav class="nav" id="nav">
+  <button id="n-chats">Discussions</button><button id="n-prof">Mon profil</button><button id="n-set">Réglages</button>
+</nav>
+<div id="toast"></div>
+</div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getFirestore,doc,getDoc,setDoc,updateDoc,addDoc,deleteDoc,collection,query,where,orderBy,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app=initializeApp({apiKey:"AIzaSyDk0OziwtLKR-Qyt7Ikq3tdmSCWIsQL1nY",authDomain:"miradorkoz.firebaseapp.com",projectId:"miradorkoz",storageBucket:"miradorkoz.firebasestorage.app",messagingSenderId:"766212709650",appId:"1:766212709650:web:00b5c2f8f85e2a2e2727cb"});
+const auth=getAuth(app),db=getFirestore(app),$=i=>document.getElementById(i);
+let me=null,mine={},unsub=[],mode="in",chatId=null,tt;
+
+const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+const hm=d=>("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
+const ini=n=>(n||"?").slice(0,2).toUpperCase();
+const fmt=p=>Number(p)?Number(p).toLocaleString("fr-FR")+" FCFA":(p?p+" FCFA":"Prix à discuter");
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("on"),2200)}
+function clean(){unsub.forEach(f=>f());unsub=[]}
+function show(s){document.querySelectorAll(".screen").forEach(e=>e.classList.toggle("on",e.id===s));$("nav").classList.toggle("on",["chats","prof","set"].includes(s))}
+function tab(n){["chats","prof","set"].forEach(x=>$("n-"+x).classList.toggle("act",x===n))}
+
+/* Couleurs */
+const R=document.documentElement.style,lum=h=>{const n=parseInt(h.slice(1),16);return(.299*(n>>16&255)+.587*(n>>8&255)+.114*(n&255))/255};
+function theme(a,b,s){const L=lum(b)>.6,t=L?"#0B1220":"#EAF0FF";
+  R.setProperty("--blue",a);R.setProperty("--bg",b);R.setProperty("--text",t);R.setProperty("--mut",L?"#56627F":"#8C9BC0");
+  R.setProperty("--panel",`color-mix(in srgb,${b} 94%,${t})`);R.setProperty("--line",`color-mix(in srgb,${b} 86%,${t})`);
+  R.setProperty("--sky",L?a:`color-mix(in srgb,${a} 65%,#fff)`);R.setProperty("--on",lum(a)>.7?"#0B1220":"#fff");R.setProperty("color-scheme",L?"light":"dark");
+  $("c1").value=a;$("c2").value=b;if(s!==0)try{localStorage.setItem("mkoz-theme",JSON.stringify([a,b]))}catch(e){}}
+[["Bleu nuit","#2F6BFF","#050B1A"],["Vert","#1FB26B","#04120C"],["Orange","#FF8A2B","#140A04"],["Rose","#FF4F9A","#14050E"],["Violet","#8B5CF6","#0B0618"],["Clair","#2F6BFF","#F4F7FF"]].forEach(p=>{
+  const b=el("button","sw2");b.title=p[0];b.setAttribute("aria-label",p[0]);b.style.background=p[2];b.style.borderColor=p[1];const i=el("i");i.style.background=p[1];b.appendChild(i);b.onclick=()=>theme(p[1],p[2]);$("pre").appendChild(b)});
+["c1","c2"].forEach(i=>$(i).addEventListener("input",()=>theme($("c1").value,$("c2").value)));
+$("rs").onclick=()=>theme("#2F6BFF","#050B1A");
+try{const v=JSON.parse(localStorage.getItem("mkoz-theme"));if(v)theme(v[0],v[1],0)}catch(e){}
+
+/* Connexion */
+const err=x=>({"auth/invalid-credential":"E-mail ou mot de passe incorrect","auth/invalid-email":"Adresse e-mail invalide","auth/email-already-in-use":"Cet e-mail a déjà un compte","auth/weak-password":"Mot de passe trop court (6 caractères minimum)","auth/network-request-failed":"Pas de connexion internet"}[x.code]||"Une erreur est survenue, réessaie");
+$("sw").onclick=()=>{mode=mode==="in"?"up":"in";$("nm").hidden=mode==="in";$("go").textContent=mode==="in"?"Se connecter":"Créer mon compte";$("sw").textContent=mode==="in"?"Créer un compte":"J’ai déjà un compte"};
+$("go").onclick=async()=>{const e=$("em").value.trim(),p=$("pw").value;
+  try{if(mode==="up"){const n=$("nm").value.trim();if(!n)return toast("Entre ton nom");
+      const c=await createUserWithEmailAndPassword(auth,e,p);mine={name:n,bio:""};await setDoc(doc(db,"users",c.user.uid),{name:n,bio:"",created:serverTimestamp()});route()}
+    else await signInWithEmailAndPassword(auth,e,p)}catch(x){toast(err(x))}};
+$("lo").onclick=()=>signOut(auth);
+onAuthStateChanged(auth,async u=>{me=u;
+  if(u){try{const s=await getDoc(doc(db,"users",u.uid));if(s.exists())mine=s.data()}catch(e){}
+    if(!mine.name)mine={name:u.email,bio:""};route()}
+  else{clean();show("auth")}});
+
+/* Navigation */
+function route(){if(!me){show("auth");return}const h=location.hash;
+  if(h.startsWith("#/u/"))openProf(h.slice(4));else if(h.startsWith("#/c/"))openChat(h.slice(4));else if(h==="#/set")openSet();else openChats()}
+addEventListener("hashchange",route);
+$("n-chats").onclick=()=>location.hash="#/chats";
+$("n-prof").onclick=()=>location.hash="#/u/"+me.uid;
+$("n-set").onclick=()=>location.hash="#/set";
+$("bk").onclick=()=>location.hash="#/chats";
+
+/* Discussions */
+function openChats(){clean();tab("chats");show("chats");
+  unsub.push(onSnapshot(query(collection(db,"chats"),where("members","array-contains",me.uid)),s=>{
+    const a=[];s.forEach(d=>a.push({id:d.id,...d.data()}));a.sort((x,y)=>(y.t?.seconds||9e9)-(x.t?.seconds||9e9));
+    const l=$("cl");l.textContent="";
+    if(!a.length)l.appendChild(el("p","note pad","Aucune discussion pour l’instant. Colle un lien de profil ci-dessus pour écrire à quelqu’un."));
+    a.forEach(c=>{const o=c.members.find(x=>x!==me.uid),n=(c.names&&c.names[o])||"Contact",b=el("button","row"),m=el("div","mid");
+      b.appendChild(el("div","av",ini(n)));m.appendChild(el("b","",n));m.appendChild(el("span","",c.last||"Nouvelle discussion"));b.appendChild(m);
+      b.onclick=()=>location.hash="#/c/"+c.id;l.appendChild(b)})},()=>toast("Impossible de charger les discussions")))}
+$("ol").onclick=()=>{const v=$("lk").value.trim(),m=v.match(/#\/u\/([A-Za-z0-9]+)/)||v.match(/^([A-Za-z0-9]{20,})$/);
+  if(m){$("lk").value="";location.hash="#/u/"+m[1]}else toast("Lien non reconnu")};
+
+/* Conversation */
+async function openChat(id){clean();tab("chats");show("chat");chatId=null;
+  const r=doc(db,"chats",id);let c;
+  try{const s=await getDoc(r);if(!s.exists())throw 0;c=s.data();if(!c.members.includes(me.uid))throw 0}catch(e){toast("Discussion introuvable");location.hash="#/chats";return}
+  const o=c.members.find(x=>x!==me.uid),n=(c.names&&c.names[o])||"Contact";chatId=id;
+  $("cn").textContent=n;$("cav").textContent=ini(n);$("cn").onclick=()=>location.hash="#/u/"+o;
+  unsub.push(onSnapshot(query(collection(r,"messages"),orderBy("at")),q=>{const m=$("ms");m.textContent="";
+    q.forEach(d=>{const x=d.data(),b=el("div","b "+(x.from===me.uid?"out":"in"),x.text);b.appendChild(el("small","",x.at?hm(x.at.toDate()):"…"));m.appendChild(b)});m.scrollTop=m.scrollHeight}))}
+async function send(){const t=$("tx").value.trim();if(!t||!chatId)return;$("tx").value="";const r=doc(db,"chats",chatId);
+  try{await addDoc(collection(r,"messages"),{from:me.uid,text:t,at:serverTimestamp()});await updateDoc(r,{last:t.slice(0,60),t:serverTimestamp()})}catch(e){toast("Message non envoyé")}}
+$("sd").onclick=send;$("tx").addEventListener("keydown",e=>{if(e.key==="Enter")send()});
+
+/* Profil et boutique */
+async function openProf(uid){clean();const own=uid===me.uid;tab(own?"prof":"");show("prof");
+  let u;try{const s=await getDoc(doc(db,"users",uid));if(!s.exists())throw 0;u=s.data()}catch(e){toast("Profil introuvable");location.hash="#/chats";return}
+  $("pn").textContent=u.name;$("pb").textContent=u.bio||(own?"Ajoute une description":"");$("pav").textContent=ini(u.name);
+  $("own").hidden=!own;$("pf").hidden=!own;$("oth").hidden=own;
+  $("wr").onclick=async()=>{const id=[me.uid,uid].sort().join("_");
+    try{await setDoc(doc(db,"chats",id),{members:[me.uid,uid].sort(),names:{[me.uid]:mine.name,[uid]:u.name}},{merge:true});location.hash="#/c/"+id}catch(e){toast("Impossible d’ouvrir la discussion")}};
+  unsub.push(onSnapshot(collection(db,"users",uid,"products"),q=>{const g=$("gr"),a=[];g.textContent="";q.forEach(d=>a.push([d.id,d.data()]));
+    a.sort((x,y)=>(y[1].at?.seconds||9e9)-(x[1].at?.seconds||9e9));
+    a.forEach(([id,p])=>{const c=el("div","art");c.appendChild(el("b","",p.n));c.appendChild(el("span","",fmt(p.p)));
+      if(own){const x=el("button","","Supprimer");x.onclick=()=>deleteDoc(doc(db,"users",uid,"products",id));c.appendChild(x)}g.appendChild(c)});
+    if(!a.length)g.appendChild(el("p","note",own?"Publie ton premier article.":"Aucun article pour l’instant."))}))}
+$("cp").onclick=()=>{const l=location.origin+location.pathname+"#/u/"+me.uid;
+  navigator.clipboard.writeText(l).then(()=>toast("Lien copié")).catch(()=>prompt("Copie ton lien :",l))};
+$("eb").onclick=async()=>{const v=prompt("Description de ton profil ou de ta boutique",mine.bio||"");if(v===null)return;
+  mine.bio=v.slice(0,160);try{await updateDoc(doc(db,"users",me.uid),{bio:mine.bio});$("pb").textContent=mine.bio||"Ajoute une description"}catch(e){toast("Enregistrement impossible")}};
+$("ad").onclick=async()=>{const n=$("an").value.trim(),p=$("ap").value.trim();if(!n)return toast("Entre le nom de l’article");
+  try{await addDoc(collection(db,"users",me.uid,"products"),{n:n.slice(0,60),p:p.slice(0,20),at:serverTimestamp()});$("an").value="";$("ap").value=""}catch(e){toast("Publication impossible")}};
+
+/* Réglages */
+function openSet(){clean();tab("set");show("set");$("who").textContent="Connecté : "+me.email}
+</script>
+</body>
+</html>
