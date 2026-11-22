@@ -64,6 +64,11 @@ input[type=color]{width:56px;height:40px;padding:3px;cursor:pointer}
 .nav button.act{color:var(--text);font-weight:600;box-shadow:inset 0 2px 0 var(--blue)}
 #toast{position:absolute;left:50%;bottom:90px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;text-align:center}
 #toast.on{opacity:1}
+.badge{background:var(--blue);color:var(--on);font-size:12px;font-weight:600;border-radius:99px;padding:2px 8px;flex:none}
+.b audio{display:block;max-width:100%;height:40px;margin-bottom:2px}
+.rec{flex:1;display:flex;align-items:center;gap:10px}.rec span{flex:1;color:#E5484D;font-weight:600}.rec button{padding:12px 16px}
+.sv{display:block;font-size:12px;color:inherit;opacity:.85;text-decoration:underline;margin:0 0 6px}
+.art .cta{color:var(--on);font-size:14px;text-align:center;padding:10px;margin-top:4px}
 .call{position:absolute;inset:0;z-index:20;background:var(--bg);display:none;flex-direction:column}.call.on{display:flex}
 #rv{flex:1;min-height:0;width:100%;object-fit:cover;background:#000}
 #lv{position:absolute;top:84px;right:14px;width:96px;height:128px;object-fit:cover;border-radius:12px;background:#000;border:1px solid var(--line)}
@@ -96,7 +101,7 @@ input[type=color]{width:56px;height:40px;padding:3px;cursor:pointer}
 <section class="screen" id="chat">
   <div class="top"><button class="back" id="bk" aria-label="Retour">‹</button><div class="av" id="cav"></div><b id="cn" style="flex:1"></b><button class="ic" id="ca" aria-label="Appel vocal">📞</button><button class="ic" id="cv" aria-label="Appel vidéo">🎥</button></div>
   <div class="msgs" id="ms"></div>
-  <div class="bar"><button class="ic" id="cph" aria-label="Envoyer une photo">📷</button><input id="tx" placeholder="Écrire un message" autocomplete="off"><button class="send" id="sd" aria-label="Envoyer">➤</button></div>
+  <div class="bar"><button class="ic" id="cph" aria-label="Envoyer une photo">📷</button><input id="tx" placeholder="Écrire un message" autocomplete="off"><button class="ic" id="mic" aria-label="Message vocal">🎙</button><button class="send" id="sd" aria-label="Envoyer">➤</button><div class="rec" id="rec" hidden><span id="rt">● 0:00</span><button class="ghost" id="rx">Annuler</button><button class="cta" id="rs2">Envoyer</button></div></div>
 </section>
 
 <section class="screen" id="prof">
@@ -117,6 +122,7 @@ input[type=color]{width:56px;height:40px;padding:3px;cursor:pointer}
       <label>Couleur principale<input type="color" id="c1" value="#2F6BFF"></label>
       <label>Couleur de fond<input type="color" id="c2" value="#050B1A"></label>
       <button class="ghost" id="rs">Rétablir le bleu nuit</button></div>
+    <div class="opt"><b>Notifications</b><span class="note" id="nts">Reçois une alerte pour les messages et les appels quand MKoz est ouvert ou en arrière-plan.</span><button class="ghost" id="nt">Activer les notifications</button></div>
     <div class="opt"><span class="note" id="who"></span><button class="ghost" id="lo">Se déconnecter</button></div>
   </div>
 </section>
@@ -134,11 +140,11 @@ input[type=color]{width:56px;height:40px;padding:3px;cursor:pointer}
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {getFirestore,doc,getDoc,setDoc,updateDoc,addDoc,deleteDoc,collection,query,where,orderBy,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {getFirestore,doc,getDoc,setDoc,updateDoc,addDoc,deleteDoc,collection,query,where,orderBy,onSnapshot,serverTimestamp,increment} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app=initializeApp({apiKey:"AIzaSyDk0OziwtLKR-Qyt7Ikq3tdmSCWIsQL1nY",authDomain:"miradorkoz.firebaseapp.com",projectId:"miradorkoz",storageBucket:"miradorkoz.firebasestorage.app",messagingSenderId:"766212709650",appId:"1:766212709650:web:00b5c2f8f85e2a2e2727cb"});
 const auth=getAuth(app),db=getFirestore(app),$=i=>document.getElementById(i);
-let me=null,mine={},unsub=[],mode="in",chatId=null,tt;
+let me=null,mine={},unsub=[],mode="in",chatId=null,tt,chatOther=null;
 
 const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
 const hm=d=>("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
@@ -193,7 +199,7 @@ function openChats(){clean();tab("chats");show("chats");
     const l=$("cl");l.textContent="";
     if(!a.length)l.appendChild(el("p","note pad","Aucune discussion pour l’instant. Cherche un profil ci-dessus (e-mail, numéro ou lien) pour écrire à quelqu’un."));
     a.forEach(c=>{const o=c.members.find(x=>x!==me.uid),n=(c.names&&c.names[o])||"Contact",b=el("button","row"),m=el("div","mid");
-      b.appendChild(el("div","av",ini(n)));m.appendChild(el("b","",n));m.appendChild(el("span","",c.last||"Nouvelle discussion"));b.appendChild(m);
+      b.appendChild(el("div","av",ini(n)));m.appendChild(el("b","",n));m.appendChild(el("span","",c.last||"Nouvelle discussion"));b.appendChild(m);const un=(c.unread&&c.unread[me.uid])||0;if(un)b.appendChild(el("span","badge",un>99?"99+":String(un)));
       b.onclick=()=>location.hash="#/c/"+c.id;l.appendChild(b)})},()=>toast("Impossible de charger les discussions")))}
 $("ol").onclick=async()=>{const v=$("lk").value.trim(),m=v.match(/#\/u\/([A-Za-z0-9]+)/)||v.match(/^([A-Za-z0-9]{20,})$/);
   if(m){$("lk").value="";location.hash="#/u/"+m[1];return}
@@ -204,14 +210,14 @@ $("ol").onclick=async()=>{const v=$("lk").value.trim(),m=v.match(/#\/u\/([A-Za-z
 async function openChat(id){clean();tab("chats");show("chat");chatId=null;
   const r=doc(db,"chats",id);let c;
   try{const s=await getDoc(r);if(!s.exists())throw 0;c=s.data();if(!c.members.includes(me.uid))throw 0}catch(e){toast("Discussion introuvable");location.hash="#/chats";return}
-  const o=c.members.find(x=>x!==me.uid),n=(c.names&&c.names[o])||"Contact";chatId=id;
+  const o=c.members.find(x=>x!==me.uid),n=(c.names&&c.names[o])||"Contact";chatId=id;chatOther=o;updateDoc(r,{["unread."+me.uid]:0}).catch(()=>{});
   $("cn").textContent=n;$("cav").textContent=ini(n);$("cn").onclick=()=>location.hash="#/u/"+o;
   unsub.push(onSnapshot(query(collection(r,"messages"),orderBy("at")),q=>{const m=$("ms");m.textContent="";
-    q.forEach(d=>{const x=d.data(),b=el("div","b "+(x.from===me.uid?"out":"in"),x.text||"");if(x.img&&x.img.startsWith("data:image/")){const g=el("img","mimg");g.src=x.img;b.prepend(g)}b.appendChild(el("small","",x.at?hm(x.at.toDate()):"…"));m.appendChild(b)});m.scrollTop=m.scrollHeight}))}
+    q.forEach(d=>{const x=d.data(),b=el("div","b "+(x.from===me.uid?"out":"in"),x.text||"");if(x.img&&x.img.startsWith("data:image/")){const g=el("img","mimg");g.src=x.img;b.prepend(g);const sv=el("button","sv","⬇ Enregistrer la photo");sv.onclick=()=>saveImg(x.img);g.after(sv)}if(x.audio&&x.audio.startsWith("data:audio/")){const au=document.createElement("audio");au.controls=true;au.preload="metadata";au.src=x.audio;b.prepend(au)}b.appendChild(el("small","",x.at?hm(x.at.toDate()):"…"));m.appendChild(b)});m.scrollTop=m.scrollHeight;updateDoc(r,{["unread."+me.uid]:0}).catch(()=>{})}))}
 async function send(){const t=$("tx").value.trim();if(!t||!chatId)return;$("tx").value="";const r=doc(db,"chats",chatId);
-  try{await addDoc(collection(r,"messages"),{from:me.uid,text:t,at:serverTimestamp()});await updateDoc(r,{last:t.slice(0,60),t:serverTimestamp()})}catch(e){toast("Message non envoyé")}}
+  try{await addDoc(collection(r,"messages"),{from:me.uid,text:t,at:serverTimestamp()});await updateDoc(r,{last:t.slice(0,60),t:serverTimestamp(),["unread."+chatOther]:increment(1)})}catch(e){toast("Message non envoyé")}}
 $("sd").onclick=send;
-$("cph").onclick=()=>pickFile(async f=>{if(!chatId)return;try{const d=await shrink(f,900,.7);if(d.length>800000)throw 0;const r=doc(db,"chats",chatId);await addDoc(collection(r,"messages"),{from:me.uid,text:"",img:d,at:serverTimestamp()});await updateDoc(r,{last:"📷 Photo",t:serverTimestamp()})}catch(e){toast("Photo non envoyée")}});$("tx").addEventListener("keydown",e=>{if(e.key==="Enter")send()});
+$("cph").onclick=()=>pickFile(async f=>{if(!chatId)return;try{const d=await shrink(f,900,.7);if(d.length>800000)throw 0;const r=doc(db,"chats",chatId);await addDoc(collection(r,"messages"),{from:me.uid,text:"",img:d,at:serverTimestamp()});await updateDoc(r,{last:"📷 Photo",t:serverTimestamp(),["unread."+chatOther]:increment(1)})}catch(e){toast("Photo non envoyée")}});$("tx").addEventListener("keydown",e=>{if(e.key==="Enter")send()});
 
 /* Profil et boutique */
 async function openProf(uid){clean();const own=uid===me.uid;tab(own?"prof":"");show("prof");
@@ -223,7 +229,7 @@ async function openProf(uid){clean();const own=uid===me.uid;tab(own?"prof":"");s
   unsub.push(onSnapshot(collection(db,"users",uid,"products"),q=>{const g=$("gr"),a=[];g.textContent="";q.forEach(d=>a.push([d.id,d.data()]));
     a.sort((x,y)=>(y[1].at?.seconds||9e9)-(x[1].at?.seconds||9e9));
     a.forEach(([id,p])=>{const c=el("div","art");if(p.img){const m=document.createElement("img");m.src=p.img;m.alt=p.n;c.appendChild(m)}c.appendChild(el("b","",p.n));c.appendChild(el("span","",fmt(p.p)));
-      if(own){const x=el("button","","Supprimer");x.onclick=()=>deleteDoc(doc(db,"users",uid,"products",id));c.appendChild(x)}g.appendChild(c)});
+      if(!own){const y=el("button","cta","Répondre à l’annonce");y.onclick=()=>askArt(uid,u.name,p);c.appendChild(y)}if(own){const x=el("button","","Supprimer");x.onclick=()=>deleteDoc(doc(db,"users",uid,"products",id));c.appendChild(x)}g.appendChild(c)});
     if(!a.length)g.appendChild(el("p","note",own?"Publie ton premier article.":"Aucun article pour l’instant."))}))}
 $("cp").onclick=()=>{const l=location.origin+location.pathname+"#/u/"+me.uid;
   navigator.clipboard.writeText(l).then(()=>toast("Lien copié")).catch(()=>prompt("Copie ton lien :",l))};
@@ -246,6 +252,17 @@ $("pp").onclick=()=>pickFile(async f=>{try{artImg=await shrink(f,640,.7);if(artI
 
 /* Réglages */
 function openSet(){clean();tab("set");show("set");$("who").textContent="Connecté : "+me.email}
+
+/* Répondre à une annonce et enregistrer une photo */
+async function askArt(uid,name,p){const id=[me.uid,uid].sort().join("_"),r=doc(db,"chats",id);
+  try{await setDoc(r,{members:[me.uid,uid].sort(),names:{[me.uid]:mine.name,[uid]:name}},{merge:true});
+    const m={from:me.uid,text:"À propos de cet article : "+p.n+" — "+fmt(p.p),at:serverTimestamp()};if(p.img)m.img=p.img;
+    await addDoc(collection(r,"messages"),m);await updateDoc(r,{last:"🛍 "+p.n,t:serverTimestamp(),["unread."+uid]:increment(1)});location.hash="#/c/"+id}
+  catch(e){toast("Impossible d’envoyer l’annonce")}}
+async function saveImg(d){
+  try{const b=await (await fetch(d)).blob(),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="mkoz-"+Date.now()+".jpg";
+    document.body.appendChild(a);a.click();a.remove();toast("Photo enregistrée dans les téléchargements")}
+  catch(e){toast("Enregistrement impossible")}}
 
 /* Appels vocaux et vidéo (WebRTC ; la mise en relation passe par la base de données) */
 const ICE={iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}]};
@@ -283,7 +300,7 @@ function watchCalls(uid){
   return onSnapshot(query(collection(db,"calls"),where("to","==",uid),where("status","==","ringing")),q=>q.docChanges().forEach(ch=>{
     if(ch.type==="removed"){if(incoming&&incoming.ref.id===ch.doc.id&&!pc){endLocal();toast("Appel manqué")}return}
     if(ch.type!=="added")return;const d=ch.doc.data();if(Date.now()-d.at>45000||busy())return;
-    incoming={ref:ch.doc.ref,d};$("lv").hidden=true;$("ccm").hidden=!d.video;$("cok").hidden=false;$("cnm").textContent=d.fromName||"Appel";cst(d.video?"Appel vidéo entrant":"Appel vocal entrant");cshow(true)}),()=>{})}
+    incoming={ref:ch.doc.ref,d};$("lv").hidden=true;$("ccm").hidden=!d.video;$("cok").hidden=false;$("cnm").textContent=d.fromName||"Appel";cst(d.video?"Appel vidéo entrant":"Appel vocal entrant");cshow(true);try{navigator.vibrate&&navigator.vibrate([400,200,400,200,400])}catch(e){}note(d.fromName||"Appel",d.video?"Appel vidéo entrant":"Appel vocal entrant","call",true)}),()=>{})}
 $("cok").onclick=async()=>{if(!incoming)return;const {ref,d}=incoming;let st;
   try{st=await media(d.video)}catch(e){toast("Autorise le micro"+(d.video?" et la caméra":""));return hang()}
   cstream=st;cref=ref;$("lv").srcObject=d.video?st:null;$("lv").hidden=!d.video;$("cok").hidden=true;cst("Connexion…");mkpc(st);
@@ -295,7 +312,37 @@ $("cen").onclick=hang;
 $("cmu").onclick=()=>{const t=cstream&&cstream.getAudioTracks()[0];if(t){t.enabled=!t.enabled;$("cmu").classList.toggle("off",!t.enabled)}};
 $("ccm").onclick=()=>{const t=cstream&&cstream.getVideoTracks()[0];if(t){t.enabled=!t.enabled;$("ccm").classList.toggle("off",!t.enabled)}};
 $("ca").onclick=()=>callOut(false);$("cv").onclick=()=>callOut(true);
-onAuthStateChanged(auth,u=>{if(stopW){stopW();stopW=null}if(u)stopW=watchCalls(u.uid)});
+/* Messages vocaux */
+let rc=null,rch=[],rtm=null,rsec=0,rcancel=false;
+function recUI(on){$("rec").hidden=!on;["cph","tx","mic","sd"].forEach(i=>$(i).hidden=on);$("rt").textContent="● 0:00"}
+async function recStart(){if(!chatId||rc)return;let st;
+  try{st=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){return toast("Autorise le micro pour enregistrer")}
+  const mt=["audio/webm;codecs=opus","audio/mp4","audio/webm"].find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported(t));
+  try{rc=new MediaRecorder(st,mt?{mimeType:mt,audioBitsPerSecond:24000}:{audioBitsPerSecond:24000})}catch(e){st.getTracks().forEach(t=>t.stop());return toast("Message vocal non pris en charge sur ce téléphone")}
+  rch=[];rcancel=false;rsec=0;rc.ondataavailable=e=>{if(e.data.size)rch.push(e.data)};
+  rc.onstop=async()=>{clearInterval(rtm);st.getTracks().forEach(t=>t.stop());recUI(false);const b=new Blob(rch,{type:rc.mimeType||"audio/webm"});rc=null;if(rcancel||!chatId)return;
+    const d=await new Promise(ok=>{const f=new FileReader();f.onload=()=>ok(f.result);f.readAsDataURL(b)});
+    if(d.length>800000)return toast("Message vocal trop long");
+    try{const r=doc(db,"chats",chatId);await addDoc(collection(r,"messages"),{from:me.uid,text:"",audio:d,at:serverTimestamp()});
+      await updateDoc(r,{last:"🎙 Message vocal",t:serverTimestamp(),["unread."+chatOther]:increment(1)})}catch(e){toast("Message vocal non envoyé")}};
+  rc.start();recUI(true);rtm=setInterval(()=>{rsec++;$("rt").textContent="● "+fm(rsec);if(rsec>=90)rc.stop()},1000)}
+$("mic").onclick=recStart;$("rs2").onclick=()=>{if(rc)rc.stop()};$("rx").onclick=()=>{rcancel=true;if(rc)rc.stop()};
+
+/* Notifications et messages non lus */
+let swr=null,stopC=null,prevU={};
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").then(r=>{swr=r}).catch(()=>{});
+function note(title,body,tag,quiet){
+  if(document.hidden&&"Notification" in window&&Notification.permission==="granted"&&swr){try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}swr.showNotification(title,{body,tag,renotify:true})}
+  else if(!quiet)toast(title+" : "+body)}
+$("nt").onclick=async()=>{if(!("Notification" in window))return toast("Notifications non prises en charge ici");
+  const r=await Notification.requestPermission();$("nts").textContent=r==="granted"?"Notifications activées. MKoz doit rester ouvert ou en arrière-plan.":"Notifications refusées : change l’autorisation dans les réglages du navigateur."};
+function watchChats(uid){let first=true;
+  return onSnapshot(query(collection(db,"chats"),where("members","array-contains",uid)),s=>{
+    s.docChanges().forEach(ch=>{if(ch.type==="removed")return;const c=ch.doc.data(),u=(c.unread&&c.unread[uid])||0,old=prevU[ch.doc.id]||0;prevU[ch.doc.id]=u;
+      if(!first&&u>old&&location.hash!=="#/c/"+ch.doc.id){const o=c.members.find(x=>x!==uid);note((c.names&&c.names[o])||"MKoz",c.last||"Nouveau message",ch.doc.id)}});
+    first=false;let tot=0;s.forEach(d=>{const c=d.data();tot+=(c.unread&&c.unread[uid])||0});
+    $("n-chats").textContent=tot?"Discussions ("+(tot>99?"99+":tot)+")":"Discussions";document.title=tot?"("+tot+") MKoz":"MKoz"},()=>{})}
+onAuthStateChanged(auth,u=>{if(stopW){stopW();stopW=null}if(stopC){stopC();stopC=null}prevU={};if(u){stopW=watchCalls(u.uid);stopC=watchChats(u.uid)}});
 </script>
 </body>
 </html>
