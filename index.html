@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#050B1A">
 <title>MKoz</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;600;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#050B1A;--panel:#0A1530;--line:#16284F;--blue:#2F6BFF;--sky:#8DB6FF;--text:#EAF0FF;--mut:#8C9BC0;--on:#fff;color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -31,6 +32,11 @@ input[type=color]{width:56px;height:40px;padding:3px;cursor:pointer}
 .top b{font-size:18px;cursor:pointer}
 .back{font-size:24px;color:var(--sky);padding:0 8px 0 0}
 .av{width:44px;height:44px;border-radius:50%;background:var(--line);display:grid;place-items:center;font-weight:600;color:var(--sky);flex:none}
+.av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.art img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px}
+.mimg{display:block;max-width:100%;border-radius:12px;margin-bottom:4px}
+.ic{width:46px;height:46px;border-radius:50%;background:var(--panel);border:1px solid var(--line);flex:none}
+#qr{display:grid;gap:8px;justify-items:center}#qr img{width:200px;height:200px;background:#fff;padding:10px;border-radius:12px}
 .list,.scroll{overflow:auto;flex:1}
 .row{display:flex;gap:14px;align-items:center;padding:14px 20px;width:100%;text-align:left;border-bottom:1px solid var(--line)}
 .row:hover{background:var(--panel)}.mid{flex:1;min-width:0}.mid b{display:block}
@@ -58,6 +64,13 @@ input[type=color]{width:56px;height:40px;padding:3px;cursor:pointer}
 .nav button.act{color:var(--text);font-weight:600;box-shadow:inset 0 2px 0 var(--blue)}
 #toast{position:absolute;left:50%;bottom:90px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;text-align:center}
 #toast.on{opacity:1}
+.call{position:absolute;inset:0;z-index:20;background:var(--bg);display:none;flex-direction:column}.call.on{display:flex}
+#rv{flex:1;min-height:0;width:100%;object-fit:cover;background:#000}
+#lv{position:absolute;top:84px;right:14px;width:96px;height:128px;object-fit:cover;border-radius:12px;background:#000;border:1px solid var(--line)}
+.ctop{position:absolute;top:0;left:0;right:0;padding:20px;display:grid;gap:2px;color:#fff;text-shadow:0 1px 6px #000}.ctop b{font-size:22px}
+.cbar{display:flex;justify-content:center;gap:18px;padding:16px 0 22px;background:var(--bg)}
+.rd{width:60px;height:60px;border-radius:50%;background:var(--panel);border:1px solid var(--line);font-size:22px}
+.rd.off{background:var(--text);color:var(--bg)}.rd.red{background:#E5484D;border-color:#E5484D;color:#fff}.rd.grn{background:#1FB26B;border-color:#1FB26B;color:#fff}
 </style>
 </head>
 <body>
@@ -76,23 +89,23 @@ input[type=color]{width:56px;height:40px;padding:3px;cursor:pointer}
 
 <section class="screen" id="chats">
   <div class="top"><h2>Discussions</h2></div>
-  <div class="pub" style="padding-top:12px"><input id="lk" placeholder="Coller un lien de profil"><button class="ghost" id="ol">Ouvrir le profil</button></div>
+  <div class="pub" style="padding-top:12px"><input id="lk" placeholder="E-mail, téléphone ou lien du profil"><button class="ghost" id="ol">Rechercher</button></div>
   <div class="list" id="cl"></div>
 </section>
 
 <section class="screen" id="chat">
-  <div class="top"><button class="back" id="bk" aria-label="Retour">‹</button><div class="av" id="cav"></div><b id="cn"></b></div>
+  <div class="top"><button class="back" id="bk" aria-label="Retour">‹</button><div class="av" id="cav"></div><b id="cn" style="flex:1"></b><button class="ic" id="ca" aria-label="Appel vocal">📞</button><button class="ic" id="cv" aria-label="Appel vidéo">🎥</button></div>
   <div class="msgs" id="ms"></div>
-  <div class="bar"><input id="tx" placeholder="Écrire un message" autocomplete="off"><button class="send" id="sd" aria-label="Envoyer">➤</button></div>
+  <div class="bar"><button class="ic" id="cph" aria-label="Envoyer une photo">📷</button><input id="tx" placeholder="Écrire un message" autocomplete="off"><button class="send" id="sd" aria-label="Envoyer">➤</button></div>
 </section>
 
 <section class="screen" id="prof">
   <div class="top"><h2>Profil</h2></div>
   <div class="scroll">
     <div class="shead"><div class="av" id="pav"></div><div><b id="pn"></b><span id="pb"></span></div></div>
-    <div class="acts" id="own" hidden><button class="cta" id="cp">Copier mon lien de profil</button><button class="ghost" id="eb">Modifier la description</button></div>
+    <div class="acts" id="own" hidden><button class="cta" id="cp">Copier mon lien de profil</button><button class="ghost" id="ph">Changer ma photo de profil</button><button class="ghost" id="eb">Modifier la description</button><button class="ghost" id="pt">Mon numéro de téléphone</button><button class="ghost" id="qb">Mon code QR</button><div id="qr" hidden></div></div>
     <div class="acts" id="oth" hidden><button class="cta" id="wr">Écrire</button></div>
-    <div class="pub" id="pf" hidden><input id="an" placeholder="Nom de l’article"><input id="ap" placeholder="Prix en FCFA" inputmode="numeric"><button class="ghost" id="ad">Publier l’article</button></div>
+    <div class="pub" id="pf" hidden><input id="an" placeholder="Nom de l’article"><input id="ap" placeholder="Prix en FCFA" inputmode="numeric"><button class="ghost" id="pp">Ajouter une photo de l’article</button><span class="note" id="pv"></span><button class="cta" id="ad">Publier l’article</button></div>
     <div class="grid" id="gr"></div>
   </div>
 </section>
@@ -112,6 +125,10 @@ input[type=color]{width:56px;height:40px;padding:3px;cursor:pointer}
   <button id="n-chats">Discussions</button><button id="n-prof">Mon profil</button><button id="n-set">Réglages</button>
 </nav>
 <div id="toast"></div>
+<div class="call" id="call"><video id="rv" autoplay playsinline></video><video id="lv" autoplay playsinline muted></video>
+  <div class="ctop"><b id="cnm"></b><span id="cst"></span></div>
+  <div class="cbar"><button class="rd grn" id="cok" aria-label="Répondre" hidden>📞</button><button class="rd" id="cmu" aria-label="Couper le micro">🎙</button><button class="rd" id="ccm" aria-label="Couper la caméra">🎥</button><button class="rd red" id="cen" aria-label="Raccrocher">✖</button></div></div>
+<input type="file" id="fl" accept="image/*" hidden>
 </div>
 
 <script type="module">
@@ -126,6 +143,7 @@ let me=null,mine={},unsub=[],mode="in",chatId=null,tt;
 const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
 const hm=d=>("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
 const ini=n=>(n||"?").slice(0,2).toUpperCase();
+const setAv=(e,n,p)=>{e.textContent="";if(p){const i=document.createElement("img");i.src=p;i.alt="";e.appendChild(i)}else e.textContent=ini(n)};
 const fmt=p=>Number(p)?Number(p).toLocaleString("fr-FR")+" FCFA":(p?p+" FCFA":"Prix à discuter");
 function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("on"),2200)}
 function clean(){unsub.forEach(f=>f());unsub=[]}
@@ -145,6 +163,7 @@ function theme(a,b,s){const L=lum(b)>.6,t=L?"#0B1220":"#EAF0FF";
 $("rs").onclick=()=>theme("#2F6BFF","#050B1A");
 try{const v=JSON.parse(localStorage.getItem("mkoz-theme"));if(v)theme(v[0],v[1],0)}catch(e){}
 
+const key=v=>{v=v.trim().toLowerCase();if(v.includes("@"))return /^\S+@\S+\.\S+$/.test(v)?"e:"+v:"";let d=v.replace(/\D/g,"");if(d.startsWith("00"))d=d.slice(2);if(d.length===10)d="225"+d;return d.length>=11&&d.length<=15?"p:"+d:""};
 /* Connexion */
 const err=x=>({"auth/invalid-credential":"E-mail ou mot de passe incorrect","auth/invalid-email":"Adresse e-mail invalide","auth/email-already-in-use":"Cet e-mail a déjà un compte","auth/weak-password":"Mot de passe trop court (6 caractères minimum)","auth/network-request-failed":"Pas de connexion internet"}[x.code]||"Une erreur est survenue, réessaie");
 $("sw").onclick=()=>{mode=mode==="in"?"up":"in";$("nm").hidden=mode==="in";$("go").textContent=mode==="in"?"Se connecter":"Créer mon compte";$("sw").textContent=mode==="in"?"Créer un compte":"J’ai déjà un compte"};
@@ -155,7 +174,7 @@ $("go").onclick=async()=>{const e=$("em").value.trim(),p=$("pw").value;
 $("lo").onclick=()=>signOut(auth);
 onAuthStateChanged(auth,async u=>{me=u;
   if(u){try{const s=await getDoc(doc(db,"users",u.uid));if(s.exists())mine=s.data()}catch(e){}
-    if(!mine.name)mine={name:u.email,bio:""};route()}
+    if(!mine.name)mine={name:u.email,bio:""};try{await setDoc(doc(db,"lookup",key(u.email)),{uid:u.uid})}catch(e){}route()}
   else{clean();show("auth")}});
 
 /* Navigation */
@@ -172,12 +191,14 @@ function openChats(){clean();tab("chats");show("chats");
   unsub.push(onSnapshot(query(collection(db,"chats"),where("members","array-contains",me.uid)),s=>{
     const a=[];s.forEach(d=>a.push({id:d.id,...d.data()}));a.sort((x,y)=>(y.t?.seconds||9e9)-(x.t?.seconds||9e9));
     const l=$("cl");l.textContent="";
-    if(!a.length)l.appendChild(el("p","note pad","Aucune discussion pour l’instant. Colle un lien de profil ci-dessus pour écrire à quelqu’un."));
+    if(!a.length)l.appendChild(el("p","note pad","Aucune discussion pour l’instant. Cherche un profil ci-dessus (e-mail, numéro ou lien) pour écrire à quelqu’un."));
     a.forEach(c=>{const o=c.members.find(x=>x!==me.uid),n=(c.names&&c.names[o])||"Contact",b=el("button","row"),m=el("div","mid");
       b.appendChild(el("div","av",ini(n)));m.appendChild(el("b","",n));m.appendChild(el("span","",c.last||"Nouvelle discussion"));b.appendChild(m);
       b.onclick=()=>location.hash="#/c/"+c.id;l.appendChild(b)})},()=>toast("Impossible de charger les discussions")))}
-$("ol").onclick=()=>{const v=$("lk").value.trim(),m=v.match(/#\/u\/([A-Za-z0-9]+)/)||v.match(/^([A-Za-z0-9]{20,})$/);
-  if(m){$("lk").value="";location.hash="#/u/"+m[1]}else toast("Lien non reconnu")};
+$("ol").onclick=async()=>{const v=$("lk").value.trim(),m=v.match(/#\/u\/([A-Za-z0-9]+)/)||v.match(/^([A-Za-z0-9]{20,})$/);
+  if(m){$("lk").value="";location.hash="#/u/"+m[1];return}
+  const k=key(v);if(!k)return toast("Entre un e-mail, un numéro ou un lien");
+  try{const s=await getDoc(doc(db,"lookup",k));if(s.exists()){$("lk").value="";location.hash="#/u/"+s.data().uid}else toast("Aucun profil trouvé")}catch(e){toast("Recherche impossible")}};
 
 /* Conversation */
 async function openChat(id){clean();tab("chats");show("chat");chatId=null;
@@ -186,32 +207,95 @@ async function openChat(id){clean();tab("chats");show("chat");chatId=null;
   const o=c.members.find(x=>x!==me.uid),n=(c.names&&c.names[o])||"Contact";chatId=id;
   $("cn").textContent=n;$("cav").textContent=ini(n);$("cn").onclick=()=>location.hash="#/u/"+o;
   unsub.push(onSnapshot(query(collection(r,"messages"),orderBy("at")),q=>{const m=$("ms");m.textContent="";
-    q.forEach(d=>{const x=d.data(),b=el("div","b "+(x.from===me.uid?"out":"in"),x.text);b.appendChild(el("small","",x.at?hm(x.at.toDate()):"…"));m.appendChild(b)});m.scrollTop=m.scrollHeight}))}
+    q.forEach(d=>{const x=d.data(),b=el("div","b "+(x.from===me.uid?"out":"in"),x.text||"");if(x.img&&x.img.startsWith("data:image/")){const g=el("img","mimg");g.src=x.img;b.prepend(g)}b.appendChild(el("small","",x.at?hm(x.at.toDate()):"…"));m.appendChild(b)});m.scrollTop=m.scrollHeight}))}
 async function send(){const t=$("tx").value.trim();if(!t||!chatId)return;$("tx").value="";const r=doc(db,"chats",chatId);
   try{await addDoc(collection(r,"messages"),{from:me.uid,text:t,at:serverTimestamp()});await updateDoc(r,{last:t.slice(0,60),t:serverTimestamp()})}catch(e){toast("Message non envoyé")}}
-$("sd").onclick=send;$("tx").addEventListener("keydown",e=>{if(e.key==="Enter")send()});
+$("sd").onclick=send;
+$("cph").onclick=()=>pickFile(async f=>{if(!chatId)return;try{const d=await shrink(f,900,.7);if(d.length>800000)throw 0;const r=doc(db,"chats",chatId);await addDoc(collection(r,"messages"),{from:me.uid,text:"",img:d,at:serverTimestamp()});await updateDoc(r,{last:"📷 Photo",t:serverTimestamp()})}catch(e){toast("Photo non envoyée")}});$("tx").addEventListener("keydown",e=>{if(e.key==="Enter")send()});
 
 /* Profil et boutique */
 async function openProf(uid){clean();const own=uid===me.uid;tab(own?"prof":"");show("prof");
   let u;try{const s=await getDoc(doc(db,"users",uid));if(!s.exists())throw 0;u=s.data()}catch(e){toast("Profil introuvable");location.hash="#/chats";return}
-  $("pn").textContent=u.name;$("pb").textContent=u.bio||(own?"Ajoute une description":"");$("pav").textContent=ini(u.name);
+  $("pn").textContent=u.name;$("pb").textContent=u.bio||(own?"Ajoute une description":"");setAv($("pav"),u.name,u.photo);
   $("own").hidden=!own;$("pf").hidden=!own;$("oth").hidden=own;
   $("wr").onclick=async()=>{const id=[me.uid,uid].sort().join("_");
     try{await setDoc(doc(db,"chats",id),{members:[me.uid,uid].sort(),names:{[me.uid]:mine.name,[uid]:u.name}},{merge:true});location.hash="#/c/"+id}catch(e){toast("Impossible d’ouvrir la discussion")}};
   unsub.push(onSnapshot(collection(db,"users",uid,"products"),q=>{const g=$("gr"),a=[];g.textContent="";q.forEach(d=>a.push([d.id,d.data()]));
     a.sort((x,y)=>(y[1].at?.seconds||9e9)-(x[1].at?.seconds||9e9));
-    a.forEach(([id,p])=>{const c=el("div","art");c.appendChild(el("b","",p.n));c.appendChild(el("span","",fmt(p.p)));
+    a.forEach(([id,p])=>{const c=el("div","art");if(p.img){const m=document.createElement("img");m.src=p.img;m.alt=p.n;c.appendChild(m)}c.appendChild(el("b","",p.n));c.appendChild(el("span","",fmt(p.p)));
       if(own){const x=el("button","","Supprimer");x.onclick=()=>deleteDoc(doc(db,"users",uid,"products",id));c.appendChild(x)}g.appendChild(c)});
     if(!a.length)g.appendChild(el("p","note",own?"Publie ton premier article.":"Aucun article pour l’instant."))}))}
 $("cp").onclick=()=>{const l=location.origin+location.pathname+"#/u/"+me.uid;
   navigator.clipboard.writeText(l).then(()=>toast("Lien copié")).catch(()=>prompt("Copie ton lien :",l))};
+$("pt").onclick=async()=>{const v=prompt("Ton numéro de téléphone (pour que les clients te trouvent)",mine.phone||"");if(v===null)return;const k=key(v);if(!k||k[0]!=="p")return toast("Numéro invalide");
+  try{await setDoc(doc(db,"lookup",k),{uid:me.uid});if(mine.phone&&key(mine.phone)&&key(mine.phone)!==k)await deleteDoc(doc(db,"lookup",key(mine.phone)));mine.phone=v;await updateDoc(doc(db,"users",me.uid),{phone:v});toast("Numéro enregistré")}catch(e){toast("Numéro déjà utilisé ou erreur")}};
+$("qb").onclick=()=>{const q=$("qr");q.hidden=!q.hidden;if(q.hidden||q.firstChild)return;const l=location.origin+location.pathname+"#/u/"+me.uid;
+  if(!window.qrcode){q.textContent=l;return}const c=qrcode(0,"M");c.addData(l);c.make();const i=el("img");i.alt="Code QR de mon profil";i.src=c.createDataURL(6,2);q.appendChild(i);q.appendChild(el("p","note","Scanne ce code avec l’appareil photo du téléphone pour ouvrir ce profil."))};
 $("eb").onclick=async()=>{const v=prompt("Description de ton profil ou de ta boutique",mine.bio||"");if(v===null)return;
   mine.bio=v.slice(0,160);try{await updateDoc(doc(db,"users",me.uid),{bio:mine.bio});$("pb").textContent=mine.bio||"Ajoute une description"}catch(e){toast("Enregistrement impossible")}};
 $("ad").onclick=async()=>{const n=$("an").value.trim(),p=$("ap").value.trim();if(!n)return toast("Entre le nom de l’article");
-  try{await addDoc(collection(db,"users",me.uid,"products"),{n:n.slice(0,60),p:p.slice(0,20),at:serverTimestamp()});$("an").value="";$("ap").value=""}catch(e){toast("Publication impossible")}};
+  try{await addDoc(collection(db,"users",me.uid,"products"),{n:n.slice(0,60),p:p.slice(0,20),img:artImg,at:serverTimestamp()});$("an").value="";$("ap").value="";artImg="";$("pv").textContent=""}catch(e){toast("Publication impossible")}};
+
+/* Photos (réduites puis enregistrées dans la base, sans stockage payant) */
+const shrink=(f,m,q)=>new Promise((ok,ko)=>{const r=new FileReader();r.onerror=ko;r.onload=()=>{const i=new Image();i.onerror=ko;i.onload=()=>{const k=Math.min(1,m/Math.max(i.width,i.height)),c=document.createElement("canvas");c.width=Math.round(i.width*k);c.height=Math.round(i.height*k);c.getContext("2d").drawImage(i,0,0,c.width,c.height);ok(c.toDataURL("image/jpeg",q))};i.src=r.result};r.readAsDataURL(f)});
+let pick=null,artImg="";
+const pickFile=cb=>{pick=cb;$("fl").value="";$("fl").click()};
+$("fl").onchange=()=>{const f=$("fl").files[0];if(f&&pick)pick(f)};
+$("ph").onclick=()=>pickFile(async f=>{try{const d=await shrink(f,256,.75);await updateDoc(doc(db,"users",me.uid),{photo:d});mine.photo=d;setAv($("pav"),mine.name,d);toast("Photo enregistrée")}catch(e){toast("Photo non enregistrée")}});
+$("pp").onclick=()=>pickFile(async f=>{try{artImg=await shrink(f,640,.7);if(artImg.length>800000)throw 0;$("pv").textContent="Photo prête ✓"}catch(e){artImg="";toast("Photo illisible ou trop lourde")}});
 
 /* Réglages */
 function openSet(){clean();tab("set");show("set");$("who").textContent="Connecté : "+me.email}
+
+/* Appels vocaux et vidéo (WebRTC ; la mise en relation passe par la base de données) */
+const ICE={iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}]};
+let pc=null,cref=null,cstream=null,cunsub=[],pend=[],ctimer=null,csec=0,stopW=null,incoming=null;
+const cst=t=>$("cst").textContent=t,fm=s=>Math.floor(s/60)+":"+("0"+s%60).slice(-2),busy=()=>!!pc||!!incoming;
+const media=v=>navigator.mediaDevices.getUserMedia({audio:true,video:v?{facingMode:"user"}:false});
+function cshow(on){$("call").classList.toggle("on",on);$("cmu").classList.remove("off");$("ccm").classList.remove("off")}
+function mkpc(st){
+  pc=new RTCPeerConnection(ICE);st.getTracks().forEach(t=>pc.addTrack(t,st));
+  pc.ontrack=e=>{$("rv").srcObject=e.streams[0]};
+  pc.onicecandidate=e=>{if(e.candidate&&cref)addDoc(collection(cref,"ice"),{by:me.uid,c:JSON.stringify(e.candidate)}).catch(()=>{})};
+  pc.onconnectionstatechange=()=>{if(!pc)return;const s=pc.connectionState;
+    if(s==="connected"){clearInterval(ctimer);csec=0;cst("0:00");ctimer=setInterval(()=>cst(fm(++csec)),1000)}
+    else if(s==="failed"){toast("Connexion impossible sur ce réseau");hang()}};
+  cunsub.push(onSnapshot(collection(cref,"ice"),q=>q.docChanges().forEach(ch=>{if(ch.type!=="added"||!pc)return;const d=ch.doc.data();if(d.by===me.uid)return;const c=JSON.parse(d.c);
+    if(pc.remoteDescription)pc.addIceCandidate(c).catch(()=>{});else pend.push(c)})))}
+const flush=()=>{pend.forEach(c=>pc&&pc.addIceCandidate(c).catch(()=>{}));pend=[]};
+function endLocal(){clearInterval(ctimer);cunsub.forEach(f=>f());cunsub=[];if(pc){pc.close();pc=null}
+  if(cstream){cstream.getTracks().forEach(t=>t.stop());cstream=null}$("rv").srcObject=null;$("lv").srcObject=null;pend=[];incoming=null;cref=null;cshow(false)}
+async function hang(){const r=cref||(incoming&&incoming.ref);if(r)try{await updateDoc(r,{status:"ended"})}catch(e){}endLocal()}
+async function callOut(v){
+  if(!chatId||busy())return;let o;
+  try{const s=await getDoc(doc(db,"chats",chatId));o=s.data().members.find(x=>x!==me.uid)}catch(e){return toast("Appel impossible")}
+  let st;try{st=await media(v)}catch(e){return toast("Autorise le micro"+(v?" et la caméra":"")+" pour appeler")}
+  cstream=st;$("lv").srcObject=v?st:null;$("lv").hidden=!v;$("ccm").hidden=!v;$("cok").hidden=true;$("cnm").textContent=$("cn").textContent;cst("Appel en cours…");cshow(true);
+  cref=doc(collection(db,"calls"));mkpc(st);
+  try{await pc.setLocalDescription(await pc.createOffer());
+    await setDoc(cref,{from:me.uid,to:o,fromName:mine.name,video:v,status:"ringing",at:Date.now(),offer:{type:pc.localDescription.type,sdp:pc.localDescription.sdp}})}
+  catch(e){toast("Appel impossible");return hang()}
+  cunsub.push(onSnapshot(cref,async s=>{const d=s.data();if(!d||!pc)return;
+    if(d.status==="ended"){toast("Appel terminé");return endLocal()}
+    if(d.answer&&!pc.currentRemoteDescription){await pc.setRemoteDescription(d.answer);flush();cst("Connexion…")}}));
+  ctimer=setTimeout(()=>{if(pc&&!pc.currentRemoteDescription){toast("Pas de réponse");hang()}},45000)}
+function watchCalls(uid){
+  return onSnapshot(query(collection(db,"calls"),where("to","==",uid),where("status","==","ringing")),q=>q.docChanges().forEach(ch=>{
+    if(ch.type==="removed"){if(incoming&&incoming.ref.id===ch.doc.id&&!pc){endLocal();toast("Appel manqué")}return}
+    if(ch.type!=="added")return;const d=ch.doc.data();if(Date.now()-d.at>45000||busy())return;
+    incoming={ref:ch.doc.ref,d};$("lv").hidden=true;$("ccm").hidden=!d.video;$("cok").hidden=false;$("cnm").textContent=d.fromName||"Appel";cst(d.video?"Appel vidéo entrant":"Appel vocal entrant");cshow(true)}),()=>{})}
+$("cok").onclick=async()=>{if(!incoming)return;const {ref,d}=incoming;let st;
+  try{st=await media(d.video)}catch(e){toast("Autorise le micro"+(d.video?" et la caméra":""));return hang()}
+  cstream=st;cref=ref;$("lv").srcObject=d.video?st:null;$("lv").hidden=!d.video;$("cok").hidden=true;cst("Connexion…");mkpc(st);
+  try{await pc.setRemoteDescription(d.offer);flush();await pc.setLocalDescription(await pc.createAnswer());
+    await updateDoc(ref,{answer:{type:pc.localDescription.type,sdp:pc.localDescription.sdp},status:"active"})}
+  catch(e){toast("Appel impossible");return hang()}
+  incoming=null;cunsub.push(onSnapshot(ref,s=>{const x=s.data();if(x&&x.status==="ended"&&pc){toast("Appel terminé");endLocal()}}))};
+$("cen").onclick=hang;
+$("cmu").onclick=()=>{const t=cstream&&cstream.getAudioTracks()[0];if(t){t.enabled=!t.enabled;$("cmu").classList.toggle("off",!t.enabled)}};
+$("ccm").onclick=()=>{const t=cstream&&cstream.getVideoTracks()[0];if(t){t.enabled=!t.enabled;$("ccm").classList.toggle("off",!t.enabled)}};
+$("ca").onclick=()=>callOut(false);$("cv").onclick=()=>callOut(true);
+onAuthStateChanged(auth,u=>{if(stopW){stopW();stopW=null}if(u)stopW=watchCalls(u.uid)});
 </script>
 </body>
 </html>
